@@ -79,9 +79,9 @@ async function searchAndClickAd(page, keyword) {
             console.log(`Searching for: ${keyword}`);
             await searchAndClickAd(page, keyword);
             await page.waitForTimeout(2000 + Math.random() * 3000); // 2-5 saniye bekle
-            await context.close(); // Bağlamı kapatın
-            await browser.close();
+            
         }
+        await context.close(); // Bağlamı kapatın
     }
-    //await browser.close();
+    await browser.close();
 })();
