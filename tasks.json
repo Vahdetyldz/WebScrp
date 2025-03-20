@@ -1,10 +1,10 @@
 [
     {
-      "Location": "Mersin",
-      "Keywords": ["çilingir", "anahtarcı", "acil çilingir"]
+      "Location": "mersin",
+      "Keywords": ["Hava durumu","çilingir", "anahtarcı", "acil çilingir"]
     },
     {
-      "Location": "İstanbul",
+      "Location": "İsTanBul",
       "Keywords": ["Beyaz eşya servisi", "beyaz eşya tamircisi"]
     }
 ]
