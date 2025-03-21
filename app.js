@@ -186,7 +186,7 @@ async function typeLikeHuman(page, text) {
         await page.keyboard.type(char, { delay: Math.floor(Math.random() * 100) + 200 });
 
         // %15 ihtimalle yanlış yazıp geri silsin
-        if (Math.random() < 0.15) {
+        if (Math.random() < 0.05) {
             const wrongChar = getSimilarWrongChar(char); // Yanlış harfi al
             await page.keyboard.type(wrongChar, { delay: Math.floor(Math.random() * 100) + 200 });
             await page.waitForTimeout(Math.floor(Math.random() * 500) + 300); // Yanlış yazdıktan sonra bekleme (300-800ms)
@@ -266,9 +266,8 @@ function getSimilarWrongChar(char) {
             console.log(`🔍 Arama yapılıyor: ${keyword}`);
             await searchKeywordAndTapAd(page, keyword);
             await page.waitForTimeout(2000+Math.random()*3000);
-        }
-
-        await context.close();
+            await context.close();
+        }        
     }
     await browser.close();
     console.log("✅ Tüm görevler tamamlandı. Program sonlanıyor.");
