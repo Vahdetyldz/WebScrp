@@ -29,6 +29,28 @@ function getRandomLanguageSet() {
     ];
     return languageSets[Math.floor(Math.random() * languageSets.length)];
 }
+async function addTouchEffect(page, x, y) {
+    await page.evaluate(({ x, y }) => {
+        const touchEffect = document.createElement("div");
+        touchEffect.style.position = "absolute";
+        touchEffect.style.top = `${y}px`;
+        touchEffect.style.left = `${x}px`;
+        touchEffect.style.width = "30px";
+        touchEffect.style.height = "30px";
+        touchEffect.style.borderRadius = "50%";
+        touchEffect.style.background = "rgba(255, 0, 0, 0.5)"; // Kırmızı yarı saydam dokunma efekti
+        touchEffect.style.boxShadow = "0 0 10px rgba(255, 0, 0, 0.8)";
+        touchEffect.style.pointerEvents = "none"; // Etkileşimi engelle
+        touchEffect.style.transition = "opacity 0.5s ease-out";
+
+        document.body.appendChild(touchEffect);
+
+        setTimeout(() => {
+            touchEffect.style.opacity = "0"; // Kaybolma efekti
+            setTimeout(() => touchEffect.remove(), 500);
+        }, 100);
+    }, { x, y });
+}
 
 // Gerçek mobil swipe hareketi
 async function swipeGesture(page, startX, startY, endX, endY, steps = 10) {
@@ -37,6 +59,7 @@ async function swipeGesture(page, startX, startY, endX, endY, steps = 10) {
         type: 'touchStart',
         touchPoints: [{ x: startX, y: startY }],
     });
+    await addTouchEffect(page, startX, startY);
 
     const deltaX = (endX - startX) / steps;
     const deltaY = (endY - startY) / steps;
@@ -56,6 +79,8 @@ async function swipeGesture(page, startX, startY, endX, endY, steps = 10) {
         type: 'touchEnd',
         touchPoints: [],
     });
+    await addTouchEffect(page, endX, endY);
+
 }
 
 // Reklama dokunma ve web sitesinde swipe ile gezinme
@@ -166,10 +191,8 @@ async function typeLikeHuman(page, text) {
             await page.keyboard.type(wrongChar, { delay: Math.floor(Math.random() * 100) + 200 });
             await page.waitForTimeout(Math.floor(Math.random() * 500) + 300); // Yanlış yazdıktan sonra bekleme (300-800ms)
             await page.keyboard.press("Backspace");
-            await page.waitForTimeout(Math.floor(Math.random() * 200) + 200); // Geri silerken bekleme (200-400ms)
-            await page.keyboard.press("Backspace");
             await page.waitForTimeout(Math.floor(Math.random() * 200) + 300); // Tekrar yazmadan önce bekleme (300-500ms)
-            await page.keyboard.type(char, { delay: Math.floor(Math.random() * 100) + 200 });
+           
         }
 
         // %10 ihtimalle kısa bir duraksama yapsın (düşünüyormuş gibi)
@@ -246,9 +269,8 @@ function getSimilarWrongChar(char) {
         }
 
         await context.close();
-        await browser.close();
     }
-
+    await browser.close();
     console.log("✅ Tüm görevler tamamlandı. Program sonlanıyor.");
     process.exit(0);
 })();
