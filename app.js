@@ -228,6 +228,7 @@ function getRandomDevice() {
         const browser = await chromium.launchPersistentContext(userDataDir,{ 
             headless: false,  // Tarayıcı arayüzü açık olacak
             viewport: devices[deviceName].viewport,  // Ekran boyutunu iPhone 12’ye ayarla
+            /*locale : */ //dil ayarı ekle
             userAgent: devices[deviceName].userAgent,  // iPhone 12'nin userAgent bilgisini kullan
             isMobile: true,  // Mobil modu aç
             hasTouch: true,  // Dokunmatik ekranı etkinleştir
@@ -235,12 +236,61 @@ function getRandomDevice() {
                 latitude: coordinates.latitude,
                 longitude: coordinates.longitude
             },
-            permissions: ['geolocation']
+            permissions: ['geolocation'],
+            args: ['--disable-webrtc'],
+            //proxy: { server: 'http://proxyserver.com:8080', username: 'user', password: 'pass' } /* İlerde Kullanmak için */
 
         });
 
         const page = await browser.newPage();
 
+        await browser.addInitScript(() => {
+            const getShaderPrecisionFormat = WebGLRenderingContext.prototype.getShaderPrecisionFormat;
+            
+            WebGLRenderingContext.prototype.getShaderPrecisionFormat = function (shadertype, precisiontype) {
+                if (precisiontype === 35632) { // FLOAT
+                    return { rangeMin: -127, rangeMax: 127, precision: 23 };
+                }
+                if (precisiontype === 35633) { // MEDIUM FLOAT
+                    return { rangeMin: -14, rangeMax: 14, precision: 10 };
+                }
+                if (precisiontype === 35634) { // LOW FLOAT
+                    return { rangeMin: -8, rangeMax: 8, precision: 5 };
+                }
+                return getShaderPrecisionFormat.call(this, shadertype, precisiontype);
+            };
+        });
+
+        const fakeMemory = [4, 8, 16][Math.floor(Math.random() * 3)];
+        const fakeCores = [2, 4, 8, 16][Math.floor(Math.random() * 4)];
+
+        await browser.addInitScript((memory, cores) => {
+            Object.defineProperty(navigator, 'deviceMemory', { get: () => memory });
+            Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => cores });
+        }, fakeMemory, fakeCores);
+
+        await browser.addInitScript(() => {
+            Object.defineProperty(navigator, 'webdriver', { get: () => false }); // Bot tespiti engelle
+            Object.defineProperty(navigator, 'mediaDevices', {
+                get: () => ({
+                    enumerateDevices: async () => [],
+                    getUserMedia: async () => { throw new Error("Permission denied"); }
+                })
+            });
+
+            // WebGL sahtekarlığı
+            const getParameter = WebGLRenderingContext.prototype.getParameter;
+            WebGLRenderingContext.prototype.getParameter = function (parameter) {
+                if (parameter === 37445) return "AMD Radeon RX 6700 XT"; 
+                if (parameter === 37446) return "Advanced Micro Devices, Inc."; 
+                return getParameter.call(this, parameter);
+            };
+
+            // Canvas sahtekarlığı
+            HTMLCanvasElement.prototype.toDataURL = function () {
+                return "data:image/png;base64," + btoa("fake-image");
+            };
+        });
         for (const keyword of task.Keywords) {
             console.log(`🔍 Arama yapılıyor: ${keyword}`);
             await searchKeywordAndTapAd(page, keyword);
