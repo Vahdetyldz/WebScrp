@@ -3,23 +3,8 @@ const { newInjectedContext } = require('fingerprint-injector');
 const fs = require('fs');
 
 const cityCoordinates = JSON.parse(fs.readFileSync('city_coordinates.json', 'utf-8'));
+const devices = JSON.parse(fs.readFileSync('MobilDevices.json', 'utf-8'));
 const tasks = JSON.parse(fs.readFileSync('tasks.json', 'utf-8'));
-const staticFingerprintOptions = {
-    devices: ['mobile'],
-    operatingSystems: ['android']
-};
-
-const staticViewport = {
-    width: 360,
-    height: 740,
-    isMobile: true,
-    hasTouch: true
-};
-
-const staticLang = {
-    languages: ['tr-TR'],
-    language: 'tr-TR'
-};
 
 
 function getRandomLanguageSet() {
@@ -138,20 +123,13 @@ async function dismissGoogleNotification(page) {
 // Arama yap ve reklama dokun
 async function searchKeywordAndTapAd(page, keyword) {
     try {
-        await page.goto('https://www.google.com', { waitUntil: 'networkidle', timeout: 30000 });
-        await dismissGoogleNotification(page);
-        //await dismissDialog(page.context());
+        await page.goto('https://google.com/', { waitUntil: 'networkidle', timeout: 30000 });
 
-
-        await page.locator('[name=q]').click();
+        /*await page.locator('[name=q]').click();
         console.log(`Arama kutusuna "${keyword}" yazılıyor...`);
         await typeLikeHuman(page, keyword);
         await page.keyboard.press('Enter');
         console.log(`"${keyword}" kelimesi arandı. Sonuçlar yükleniyor...`);
-
-        await page.waitForTimeout(3000);
-        await dismissGoogleNotification(page);
-
         const ads = await page.locator('div[data-text-ad]');
         for (let i = 0; i < await ads.count(); i++) {
             const ad = ads.nth(i);
@@ -174,7 +152,8 @@ async function searchKeywordAndTapAd(page, keyword) {
             if (!clicked) {
                 console.log("Bu reklam atlandı (sadece Google yönlendirme linki var).");
             }
-        }
+            
+        }*/
     } catch (error) {
         console.log(`Hata oluştu (${keyword}):`, error.message);
     }
@@ -215,9 +194,26 @@ function getSimilarWrongChar(char) {
     return turkishAlphabet[wrongIndex];
 }
 
+function getRandomDevice() {
+    try {
+        // "landscape" içermeyen anahtarları filtrele
+        const filteredKeys = Object.keys(devices).filter(key => !key.toLowerCase().includes("landscape"));
+
+        // Rastgele bir key seç
+        const randomKey = filteredKeys[Math.floor(Math.random() * filteredKeys.length)];
+        console.log(randomKey);
+        return randomKey; // String olarak döndür
+    } catch (error) {
+        console.error("Hata:", error.message);
+        return null;
+    }
+}
 
 // Ana işlem
 (async () => {
+    // Kendi özel Playwright kullanıcı profili dizinini kullan
+    const userDataDir = 'Usrdata';
+
     for (const task of tasks) {
         console.log(`İşlem yapılıyor: ${task.Location}`);
 
@@ -227,46 +223,28 @@ function getSimilarWrongChar(char) {
             continue;
         }
 
-        console.log(`Koordinatlar: ${coordinates.latitude}, ${coordinates.longitude}`);
+        deviceName=getRandomDevice();
 
-        const browser = await chromium.launch({ headless: false });
-        const context = await newInjectedContext(browser, {
-            fingerprintOptions: staticFingerprintOptions,
-            newContextOptions: {
-                geolocation: {
-                    latitude: coordinates.latitude,
-                    longitude: coordinates.longitude
-                },
-                permissions: ['geolocation'],
-                viewport: staticViewport,
-                hasTouch: true
-                
-            }
+        const browser = await chromium.launchPersistentContext(userDataDir,{ 
+            headless: false,  // Tarayıcı arayüzü açık olacak
+            viewport: devices[deviceName].viewport,  // Ekran boyutunu iPhone 12’ye ayarla
+            userAgent: devices[deviceName].userAgent,  // iPhone 12'nin userAgent bilgisini kullan
+            isMobile: true,  // Mobil modu aç
+            hasTouch: true,  // Dokunmatik ekranı etkinleştir
+            geolocation: {
+                latitude: coordinates.latitude,
+                longitude: coordinates.longitude
+            },
+            permissions: ['geolocation']
+
         });
-        await context.addInitScript(() => {
-            Object.defineProperty(window, 'matchMedia', {
-                value: (query) => ({
-                    matches: query === '(prefers-color-scheme: light)',
-                    addListener: () => {},
-                    removeListener: () => {}
-                })
-            });
-        });
-        
 
-        const randomLangs = getRandomLanguageSet();
-        await context.addInitScript((langs) => {
-            Object.defineProperty(navigator, 'languages', { get: () => langs.languages });
-            Object.defineProperty(navigator, 'language', { get: () => langs.language });
-        }, randomLangs);
-
-        const page = await context.newPage();
+        const page = await browser.newPage();
 
         for (const keyword of task.Keywords) {
             console.log(`🔍 Arama yapılıyor: ${keyword}`);
             await searchKeywordAndTapAd(page, keyword);
-            await page.waitForTimeout(2000+Math.random()*3000);
-            await context.close();
+            await page.waitForTimeout(50000);
         }        
     }
     await browser.close();

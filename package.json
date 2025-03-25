@@ -10,7 +10,10 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@fingerprintjs/fingerprintjs-pro": "^3.11.8",
     "fingerprint-injector": "^2.1.62",
-    "playwright": "^1.51.1"
+    "playwright": "^1.51.1",
+    "playwright-extra": "^4.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
   }
 }
