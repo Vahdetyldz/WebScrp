@@ -52,7 +52,22 @@
       "deviceScaleFactor": 3,
       "isMobile": true,
       "hasTouch": true,
-      "defaultBrowserType": "webkit"
+      "defaultBrowserType": "webkit",
+      "platform": "Android",
+      "osVersion": "4.4.2",
+      "browserVersion": "39.0.2171.93",
+      "language": "en-US",
+      "hardwareConcurrency": 8,
+      "cpuClass": "ARM",
+      "memory": 3,
+      "userAgentData": {
+        "brand": "Samsung",
+        "model": "Galaxy Note 3",
+        "platform": "Android",
+        "version": "4.4.2"
+      },
+      "cookieEnabled": true,
+      "doNotTrack": "1"
     },
     "Galaxy Note 3 landscape": {
       "userAgent": "Mozilla/5.0 (Linux; U; Android 4.3; en-us; SM-N900T Build/JSS15J) AppleWebKit/534.30 (KHTML, like Gecko) Version/18.4 Mobile Safari/534.30",
@@ -926,7 +941,7 @@
       "defaultBrowserType": "webkit"
     },
     "iPhone 14 Pro Max": {
-      "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.4 Mobile/15E148 Safari/604.1",
+      "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_3_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.3 Mobile/15E148 Safari/605.1.15",
       "screen": {
         "width": 430,
         "height": 932

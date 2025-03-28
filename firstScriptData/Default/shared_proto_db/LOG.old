@@ -1,3 +1,2 @@
-2025/03/27-15:32:58.372 1f2c Reusing MANIFEST C:\Users\vahde\OneDrive\Masaüstü\WebScrp\firstScriptData\Default\shared_proto_db/MANIFEST-000001
-2025/03/27-15:32:58.373 1f2c Recovering log #3
-2025/03/27-15:32:58.376 1f2c Reusing old log C:\Users\vahde\OneDrive\Masaüstü\WebScrp\firstScriptData\Default\shared_proto_db/000003.log 
+2025/03/28-15:34:20.425 5340 Creating DB C:\Users\vahde\OneDrive\Masaüstü\WebScrp\firstScriptData\Default\shared_proto_db since it was missing.
+2025/03/28-15:34:20.587 5340 Reusing MANIFEST C:\Users\vahde\OneDrive\Masaüstü\WebScrp\firstScriptData\Default\shared_proto_db/MANIFEST-000001
