@@ -64,10 +64,6 @@ async function setupAntiFingerprint(page, deviceName) {
             //do NOT add custom browser headers or userAgent
         });
         const page = await browser.newPage();
-        const languageSet = {
-            languages: ['tr-TR', 'tr'],
-            language: 'tr-TR'
-        };
         await setupAntiFingerprint(page, deviceName);
         
         await page.goto('https://demo.fingerprint.com/playground', {
