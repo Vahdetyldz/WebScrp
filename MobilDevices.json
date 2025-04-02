@@ -412,6 +412,7 @@
     },
     "iPhone 8": {
       "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/18.4 Mobile/15A372 Safari/604.1",
+      "ua":"Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version...",
       "viewport": {
         "width": 375,
         "height": 667
@@ -911,7 +912,7 @@
       "defaultBrowserType": "webkit"
     },
     "iPhone 14 Pro": {
-      "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.4 Mobile/15E148 Safari/604.1",
+      "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_3_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.3 Mobile/15E148 Safari/605.1 NAVER(inapp; search; 2000; 12.12.1; 14PRO)",
       "screen": {
         "width": 393,
         "height": 852

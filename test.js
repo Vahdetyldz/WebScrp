@@ -37,17 +37,13 @@ async function setupAntiFingerprint(page) {
           })
       });
       Object.defineProperty(navigator, 'userAgentData', { //vm
-          get: () => ({
-              brands: [
-                  { brand: "Chromium", version: "120" },
-                  { brand: "Google Chrome", version: "120" }
-              ],
-              mobile: true,
-              //platform: "Android"
-          })
-      });
-      Object.defineProperties(navigator, 'platform', {
-          get: () => 'Linux armv8l'
+        get: () => ({
+            brands: [
+                { brand: "Chromium", version: "120" },
+                { brand: "Google Chrome", version: "120" }
+            ],
+            mobile: true,
+        })
       });
 
       console.debug = () => {};
@@ -58,7 +54,7 @@ async function setupAntiFingerprint(page) {
     const coordinates = cityCoordinates[getRandomCity()];
     for (let i = 0; i < 1; i++) {
       const userDataDir = "UserData"+Math.floor(Math.random() * 1000);
-      const device = getRandomDevice();
+      const device = devices["Pixel 7"];//getRandomDevice();
       const browser = await chromium.launchPersistentContext(userDataDir, {
           channel: "chrome",
           headless: false,
@@ -83,13 +79,7 @@ async function setupAntiFingerprint(page) {
         await page.keyboard.type('Hava durumu');
         await page.keyboard.press('Enter');
         */
-        await page.waitForTimeout(40000);
-        await browser.close();
-        try {
-          fs.unlinkSync(userDataDir);
-          console.log(userDataDir,' Dosyası başarıyla silindi.');
-        } catch (err) {
-          console.error('Dosya silinirken hata oluştu:', err);
-        }        
+        await page.waitForTimeout(60000*60);
+        await browser.close();   
     }    
 })();
