@@ -1,4 +1,4 @@
-const { chromium } = require('patchright');
+const { chromium, devices } = require('patchright');
 const fs = require('fs');
 
 const cityCoordinates = JSON.parse(fs.readFileSync('city_coordinates.json', 'utf-8'));
@@ -28,15 +28,18 @@ async function setupAntiFingerprint(page, deviceName) {
                 getUserMedia: async () => { throw new Error("Permission denied"); }
             })
         });
-        Object.defineProperty(navigator, 'userAgentData', { //virtual Machine sorununu ortadan kaldırdı.
+        Object.defineProperty(navigator, 'userAgentData', { //vm
             get: () => ({
                 brands: [
                     { brand: "Chromium", version: "120" },
                     { brand: "Google Chrome", version: "120" }
                 ],
                 mobile: true,
-                platform: args.isAndroid ? "Android" : "iOS"
+                platform: "Android"
             })
+        });
+        Object.defineProperties(navigator, 'platform', {
+            get: () => 'Linux armv8l'
         });
 
         console.debug = () => {};
@@ -44,9 +47,10 @@ async function setupAntiFingerprint(page, deviceName) {
 }
 
 (async () => {
-    const userDataDir = "firstScriptData";
+    const userDataDir = "test";
     const coordinates = cityCoordinates["MERSİN"];
-    const deviceName = getRandomDevice();
+    const filteredKeys = Object.keys(devices).filter(key => key.includes("iPhone 14 Pro"));
+    const deviceName = filteredKeys[0];
     for (let i = 0; i < 1; i++) {
         
         const browser = await chromium.launchPersistentContext(userDataDir, {
