@@ -16,6 +16,9 @@
     "patchright": "^1.51.2",
     "playwright": "^1.51.1",
     "playwright-extra": "^4.3.6",
+    "playwright-extra-plugin-stealth": "^0.0.1",
+    "puppeteer": "^24.5.0",
+    "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2"
   }
 }

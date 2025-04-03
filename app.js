@@ -1,5 +1,6 @@
 const { chromium, devices } = require('patchright');
 const fs = require('fs');
+const path = require('path');
 
 const cityCoordinates = JSON.parse(fs.readFileSync('city_coordinates.json', 'utf-8'));
 
@@ -28,53 +29,91 @@ function getRandomDevice() {
 
 async function setupAntiFingerprint(page) {
   await page.addInitScript(() => {
-    Object.defineProperty(navigator, 'webdriver', { get: () => false });
+    // WebDriver Tespiti Engelleme
+    Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
 
-    Object.defineProperty(navigator, 'mediaDevices', {
+    // Mobil Tarayıcı Bilgileri
+    Object.defineProperty(navigator, 'platform', { get: () => "Linux armv81" }); // Android cihazlar için geçerli
+    Object.defineProperty(navigator, 'userAgentData', {
       get: () => ({
-        enumerateDevices: async () => [
-          { kind: 'audioinput', deviceId: 'default' },
-          { kind: 'videoinput', deviceId: 'camera1' }
+        brands: [
+          { brand: "Google Chrome", version: "122" }, 
+          { brand: "Chromium", version: "122" }
         ],
-        getUserMedia: async () => ({})
+        mobile: true,
+        platform: "Android",
+        platformVersion: "14",
+        architecture: "arm64",
+        bitness: "64",
+        model: "Pixel 7",
+        wow64: false,
+        uaFullVersion: "122.0.6261.127"
       })
     });
 
-    Object.defineProperty(navigator, 'userAgentData', {
-        get: () => ({
-          brands: [
-            { brand: "Not A(Brand", version: "8" },
-            { brand: "Chromium", version: "132" },
-            { brand: "Google Chrome",version:"132"}
-          ],
-          mobile: true,
-          platform: "Android",
-          platformVersion: "13.0.0",
-          architecture: "empty",
-          bitness: "empty",
-          model: "Pixel 7",
-          wow64: false,
-          uaFullVersion: "120.0.6099.216",
-          fullVersionList: [{brand:"Not A(Brand",version:"8.0.0.0"},
-            {brand:"Chromium",version:"132.0.6834.163"},
-            {brand:"Google Chrome",version:"132.0.6834.163"}],
-          formFactors: ["Mobile"],
-        })
-      });
+    // WebRTC (IP sızıntısını engelleme)
+    navigator.mediaDevices.enumerateDevices = async () => {
+      return [{ kind: "audioinput", label: "", deviceId: "default" }];
+    };
 
-    Object.defineProperty(navigator, 'platform', {
-      get: () => 'Linux armv81'
+    // AudioContext (Ses parmak izi koruma)
+    /*
+    const oldGetFloatFrequencyData = AnalyserNode.prototype.getFloatFrequencyData;
+    AnalyserNode.prototype.getFloatFrequencyData = function(array) {
+      const randomFactor = 0.0001 * Math.random();
+      for (let i = 0; i < array.length; i++) {
+        array[i] += randomFactor;
+      }
+      return oldGetFloatFrequencyData.apply(this, arguments);
+    };
+    */
+    // WebGL (GPU Parmak İzini Değiştirme)
+    WebGLRenderingContext.prototype.getParameter = function(param) {
+      if (param === 37446) return "Adreno (TM) " + (630 + Math.floor(Math.random() * 20));
+      return getParameter.call(this, param);
+    };
+
+    //Canvas Fingerprint Spoofing
+    HTMLCanvasElement.prototype.getContext = function(type, attributes) {
+      const ctx = getContext.apply(this, arguments);
+      if (type === '2d') {
+        const originalFillText = ctx.fillText;
+        ctx.fillText = function(text, x, y, maxWidth) {
+          ctx.globalAlpha = 0.99 + Math.random() * 0.02; 
+          return originalFillText.apply(this, arguments);
+        };
+      }
+      return ctx;
+    };
+
+    // Mobil Dokunmatik Ekran Simülasyonu
+    Object.defineProperty(navigator, 'maxTouchPoints', { get: () => 5 });
+    Object.defineProperty(navigator, 'hasTouch', { get: () => true });
+
+    //Sensörler (Hareket, Jiroskop)
+    window.DeviceMotionEvent = class DeviceMotionEvent extends Event {};
+    window.DeviceOrientationEvent = class DeviceOrientationEvent extends Event {};
+
+    Object.defineProperty(navigator, 'connection', {
+      get: () => ({
+        downlink: 10,
+        effectiveType: "4g",
+        rtt: 50,
+        saveData: false,
+        type: "cellular"
+      })
     });
 
-    Object.defineProperty(navigator, 'deviceMemory', { get: () => 8 });
-    Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => 8 });
-    Object.defineProperty(navigator, 'maxTouchPoints', { get: () => 5 });
+    // Mobil Yazı Tipleri
+    Object.defineProperty(navigator, 'fonts', {
+      get: () => ["Arial", "Verdana", "Times New Roman", "Courier New", "Georgia", "Roboto", "San Francisco"]
+    });
 
+    // Tarayıcı İzinleri (Mobil tarayıcıda bazı izinleri açılmış gibi gösterme)
     const fakePermission = {
       state: 'granted',
       onchange: null
     };
-
     const originalQuery = window.navigator.permissions.query;
     window.navigator.permissions.query = (parameters) => {
       if (parameters.name === 'geolocation' || parameters.name === 'notifications') {
@@ -83,52 +122,43 @@ async function setupAntiFingerprint(page) {
       return originalQuery(parameters);
     };
 
-    const oldToString = Function.prototype.toString;
-    const nativeToStringMap = new WeakMap();
-    Function.prototype.toString = new Proxy(oldToString, {
-      apply: function(target, thisArg, args) {
-        if (nativeToStringMap.has(thisArg)) {
-          return nativeToStringMap.get(thisArg);
-        }
-        return target.apply(thisArg, args);
-      }
+    Object.defineProperty(navigator, "plugins", {
+      get: () => [
+        { name: "Chrome PDF Plugin", filename: "internal-pdf-viewer" },
+        { name: "Chrome PDF Viewer", filename: "mhjfbmdgcfjbbpaeojofohoefgiehjai" }
+      ]
+    });
+    Object.defineProperty(navigator, "mimeTypes", {
+      get: () => [
+        { type: "application/pdf", suffixes: "pdf", description: "Portable Document Format" }
+      ]
     });
 
-    const mockNative = (fn, name) => {
-      const nativeStr = `function ${name || ''}() { [native code] }`;
-      nativeToStringMap.set(fn, nativeStr);
-    };
-    const getParameter = WebGLRenderingContext.prototype.getParameter;
-    WebGLRenderingContext.prototype.getParameter = function(param) {
-      if (param === 37445) return 'Qualcomm';
-      if (param === 37446) return 'Adreno (TM) 640';
-      return getParameter.call(this, param);
-    };
-
-    // AudioContext spoofing
-    Object.defineProperty(AudioContext.prototype, 'sampleRate', {
-      get: () => 44100
-    });
-
-    // screen spoofing
-    Object.defineProperty(screen, 'colorDepth', { get: () => 24 });
-    Object.defineProperty(screen, 'pixelDepth', { get: () => 24 });
-
-    // navigator.connection spoofing
-    Object.defineProperty(navigator, 'connection', {
-      get: () => ({
-        downlink: 10,
-        effectiveType: '4g',
-        rtt: 50,
-        saveData: false,
-        type: 'cellular'
-      })
-    });    
-    console.debug = () => {};
   });
 }
 
+function deleteUserDataDirectory() {
+  const directoryPath = path.join(__dirname); // Mevcut dizini al
+  try {
+    // Proje dizinindeki tüm dosya ve klasörleri oku
+    const files = fs.readdirSync(directoryPath);
+
+    // 'UserData' ile başlayan tüm klasörleri sil
+    files.forEach(file => {
+      const filePath = path.join(directoryPath, file); // Dosya yolu
+      if (fs.lstatSync(filePath).isDirectory() && file.startsWith('UserData')) { // Eğer klasörse ve 'UserData' ile başlıyorsa
+        fs.rmSync(filePath, { recursive: true, force: true });
+        console.log(`Silindi: ${filePath}`);
+      }
+    });
+  } catch (err) {
+    console.error('Klasör silme hatası:', err);
+  }
+}
+
 (async () => {
+  deleteUserDataDirectory(); // Kullanıcı verilerini sil
+
   const coordinates = cityCoordinates[getRandomCity()];
   const userDataDir = "UserData" + Math.floor(Math.random() * 1000);
   const device = devices["Pixel 7"];//getRandomDevice();
@@ -147,10 +177,16 @@ async function setupAntiFingerprint(page) {
     geolocationEnabled: true,
     geolocation: {
       latitude: coordinates.latitude,
-      longitude: coordinates.longitude
+      longitude: coordinates.longitude,
+      accuaracy: (Math.floor(Math.random() * 5)+5)
     },
     defaultbrowserType: device.defaultBrowserType,
     permissions: ['geolocation'],
+    javaScriptEnabled: true,
+    ignoreHTTPSErrors: true,
+    chromiumSandbox: false,
+    acceptDownloads: true,
+    extraHTTPHeaders: { "DNT": "1", "Upgrade-Insecure-Requests": "1" }
   });
 
   const [page] = browser.pages();
@@ -160,10 +196,4 @@ async function setupAntiFingerprint(page) {
   await page.waitForTimeout(60000 * 60);
 
   await browser.close();
-  try {
-    fs.unlinkSync(userDataDir);
-    console.log(userDataDir, 'Dosyasi basariyla silindi.');
-  } catch (err) {
-    console.error('Dosya silinirken hata olustu:', err);
-  }
 })();

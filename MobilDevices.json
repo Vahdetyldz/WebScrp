@@ -1496,7 +1496,7 @@
       "defaultBrowserType": "chromium"
     },
     "Pixel 5": {
-      "userAgent": "Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.7049.17 Mobile Safari/537.36",
+      "userAgent": "Mozilla/5.0 (Linux; Android 13; Pixel 5 Build/TQ3A.230901.001) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.6261.119 Safari/537.36; SkyLeap/1.33.1",
       "screen": {
         "width": 393,
         "height": 851
