@@ -24,7 +24,7 @@ async function setupAntiFingerprint(page) {
       Object.defineProperty(navigator, 'vendorSub', { get: () => '' });
       Object.defineProperty(navigator, 'productSub', { get: () => '20030107' });
       Object.defineProperty(navigator, 'product', { get: () => 'Gecko' });
-      Object.defineProperty(navigator, 'appVersion', { get: () => '5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.6261.127 Mobile Safari/537.36' });
+      Object.defineProperty(navigator, 'appVersion', { get: () => '5.0 (Linux; Android 11; Redmi Note 11) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.6261.127 Mobile Safari/537.36' });
       Object.defineProperty(navigator, 'platform', { get: () => 'Linux armv81' });
       Object.defineProperty(navigator, 'oscpu', { get: () => 'Linux armv81' });
       Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => 8 });
@@ -38,10 +38,10 @@ async function setupAntiFingerprint(page) {
           ],
           mobile: true,
           platform: "Android",
-          platformVersion: "14",
+          platformVersion: "11",
           architecture: "arm64",
           bitness: "64",
-          model: "Pixel 7",
+          model: "Redmi Note 11",
           wow64: false,
           uaFullVersion: "122.0.6261.127"
         })

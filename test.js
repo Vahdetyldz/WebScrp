@@ -1,137 +1,117 @@
 const { chromium, devices } = require("patchright"); 
+const path = require('path');
+const fs = require('fs');
+const readline = require('readline');
+
+// Site listesi
+const sites = [
+  { name: "Fingerprint Demo", url: "https://demo.fingerprint.com/playground" },
+  { name: "Bot Sannysoft", url: "https://bot.sannysoft.com/" },
+  { name: "Browser Leaks", url: "https://browserleaks.com/javascript" },
+  { name: "Browser Scan", url: "https://www.browserscan.net/bot-detection" },
+  
+];
+
+// Kullanıcıdan girdi almak için readline interface
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
+
+// Site seçim fonksiyonu
+function selectSite() {
+  return new Promise((resolve) => {
+    console.log("\nLütfen bir site seçin:");
+    sites.forEach((site, index) => {
+      console.log(`${index + 1}. ${site.name}`);
+    });
+    
+    rl.question("\nSeçiminiz: ", (answer) => {
+      const choice = parseInt(answer);
+      if (choice >= 1 && choice <= sites.length) {
+        rl.close();
+        resolve(sites[choice - 1].url);
+      } else {
+        console.log("Geçersiz seçim! Lütfen tekrar deneyin.");
+        selectSite().then(resolve);
+      }
+    });
+  });
+}
+
+function deleteUserDataDirectory() {
+  const directoryPath = path.join(__dirname);
+  try {
+    const files = fs.readdirSync(directoryPath);
+    files.forEach(file => {
+      const filePath = path.join(directoryPath, file);
+      if (fs.lstatSync(filePath).isDirectory() && file.startsWith('user-data')) {
+        fs.rmSync(filePath, { recursive: true, force: true });
+      }
+    });
+  } catch (err) {
+    console.error('Klasör silme hatası:', err);
+  }
+}
 
 (async () => {
-  console.log("Tarayıcı başlatılıyor...");
+  const selectedUrl = await selectSite();
+  deleteUserDataDirectory();
   let browser;
 
   const randomNumber = Math.floor(Math.random() * 100000000) + 1;
   const formattedNumber = String(randomNumber).padStart(8, "0");
   const userDataDir = `user-data-dir-${formattedNumber}`;
-  console.log(userDataDir);
-
-  // iPhone 14 Pro Max cihazı seçildi
-  const singleDevice = devices["Iphone 14 Pro Max"];
-  console.log("Seçilen cihaz:", singleDevice);
+  const singleDevice = devices["iPhone 14 Pro Max"];
 
   try {
     browser = await chromium.launchPersistentContext(userDataDir, {
       channel: "chrome",
-      ...singleDevice,
-      args: [
-        "--disable-blink-features=AutomationControlled",
-        "--touch-events=enabled",
-        "--disable-client-side-phishing-detection",
-        "--disable-component-extensions-with-background-pages",
-        "--allow-pre-commit-input",
-        "--disable-ipc-flooding-protection",
-        "--metrics-recording-only",
-        "--unsafely-disable-devtools-self-xss-warnings",
-        "--disable-back-forward-cache",
-        "--disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding,ThirdPartyStoragePartitioning,LensOverlay,PlzDedicatedWorker",
-      ],
       headless: false,
-      viewport: { width: 430, height: 873 }, // iPhone 14 Pro Max viewport
-      screen: { width: 430, height: 932 }, // iPhone 14 Pro Max ekran boyutu
+      viewport: singleDevice.viewport, // iPhone 14 Pro Max viewport
+      screen: singleDevice.screen, // iPhone 14 Pro Max ekran boyutu
       userAgent:
-        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_3_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/133.0.6943.120 Mobile/15E148 Safari/604.1",
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_3_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/134.0.0.0 Mobile/15E148 Safari/604.1",
       isMobile: true,
       deviceScaleFactor: 3, // iPhone 14 Pro Max için devicePixelRatio
     });
-    console.log("Tarayıcı başarıyla başlatıldı.");
 
     const pages = browser.pages();
     const page = pages.length > 0 ? pages[0] : await browser.newPage();
-    console.log("Kullanılan sayfa:", page.url());
 
     // Sahteleme scriptlerini ekliyoruz
     await page.addInitScript(() => {
-      // **Screen Özellikleri için sahteleme**
-      const screenProxy = new Proxy(screen, {
-        get(target, prop) {
-          if (prop === "width") return 430;
-          if (prop === "height") return 932;
-          if (prop === "availWidth") return 430;
-          if (prop === "availHeight") return 932;
-          if (prop === "colorDepth") return 24;
-          if (prop === "pixelDepth") return 24;
-          if (prop === "availTop") return 0;
-          if (prop === "availLeft") return 0;
-          if (prop === "orientation") {
-            return {
-              type: "portrait-primary",
-              angle: 0,
-              onchange: null,
-              addEventListener: () => {},
-              removeEventListener: () => {},
-              dispatchEvent: () => {},
-            };
-          }
-          return Reflect.get(target, prop);
-        },
-      });
-
-      Object.defineProperty(window, "screen", {
-        value: screenProxy,
-        writable: false,
-        configurable: true,
-        enumerable: true,
-      });
-
-      // **Window Özellikleri**
-      Object.defineProperty(window, "innerWidth", {
-        get: () => 430,
-        configurable: true,
-      });
-      Object.defineProperty(window, "innerHeight", {
-        get: () => 873,
-        configurable: true,
-      });
-      Object.defineProperty(window, "outerWidth", {
-        get: () => 430,
-        configurable: true,
-      });
-      Object.defineProperty(window, "outerHeight", {
-        get: () => 932,
-        configurable: true,
-      });
-      Object.defineProperty(window, "devicePixelRatio", {
-        get: () => 3,
-        configurable: true,
-      });
-
-      // **div.clientHeight için sahteleme**
-      Object.defineProperty(HTMLElement.prototype, "clientHeight", {
-        get: function () {
-          if (this.tagName === "DIV" && this.id === "test-div") {
-            return 873; // browserleaks'in test div'i için
-          }
-          const style = window.getComputedStyle(this);
-          return (
-            parseInt(style.height) || this.getBoundingClientRect().height || 873
-          );
-        },
-        configurable: true,
-      });
+      /*Bu kodu eklediğimiz zaman:
+      -finger print browser tampering hatası veriyor
+      -Bot Sannysoft
+      -Browser Scan testlerinden geçiyor
+      */
+      Object.defineProperty(window, 'chrome', {
+        get: () => ({
+          runtime: {},
+          loadTimes: function() {},
+          csi: function() {},
+          app: {}
+        })
+      }); 
 
       // **Navigator için Proxy ile tam kontrol**
       const desiredNavigator = {
         // Temel özellikler (Navigator Object için)
         userAgent:
-          "Mozilla/5.0 (iPhone; CPU iPhone OS 17_3_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/133.0.6943.120 Mobile/15E148 Safari/604.1",
+          "Mozilla/5.0 (iPhone; CPU iPhone OS 17_3_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/134.0.0.0 Mobile/15E148 Safari/604.1",
         appVersion:
-          "5.0 (iPhone; CPU iPhone OS 17_3_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/133.0.6943.120 Mobile/15E148 Safari/604.1",
-        appName: "Netscape",
-        appCodeName: "Mozilla",
+          "5.0 (iPhone; CPU iPhone OS 17_3_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/134.0.0.0 Mobile/15E148 Safari/604.1",
         product: "Gecko",
         productSub: "20030107",
         vendor: "Apple Computer, Inc.",
         vendorSub: "empty",
         buildID: undefined,
-        platform: "iPhone",
+        platform: 'iPhone',
         oscpu: undefined,
         hardwareConcurrency: 4,
         language: "tr-TR",
-        //languages: ["tr-TR", "en-US", "en"], /* Bu kısmı eklediğimiz zaman bot hatası veriyor */
+        //languages: ["tr-TR","tr", "en-US", "en"], /* Bu kısmı eklediğimiz zaman bot hatası veriyor */
         deviceMemory: undefined,
         onLine: true,
         doNotTrack: undefined,
@@ -370,45 +350,12 @@ const { chromium, devices } = require("patchright");
     });
 
     // Sayfaya git
-    await page.goto("https://demo.fingerprint.com/playground", {
-      waitUntil: "networkidle",
-    });
-
-    // Bilgileri kontrol et
-    const navigatorInfo = await page.evaluate(() => {
-      const props = {};
-      for (const key in navigator) {
-        props[key] = navigator[key];
-      }
-      return {
-        ...props,
-        width: screen.width,
-        height: screen.height,
-        availWidth: screen.availWidth,
-        availHeight: screen.availHeight,
-        colorDepth: screen.colorDepth,
-        pixelDepth: screen.pixelDepth,
-        availTop: screen.availTop,
-        availLeft: screen.availLeft,
-        orientationType: screen.orientation?.type,
-        orientationAngle: screen.orientation?.angle,
-        devicePixelRatio: window.devicePixelRatio,
-        innerWidth: window.innerWidth,
-        innerHeight: window.innerHeight,
-        outerWidth: window.outerWidth,
-        outerHeight: window.outerHeight,
-        dateFormat: new Intl.DateTimeFormat("tr-TR").format(new Date()),
-      };
-    });
-
-    console.log("Navigator Bilgileri:", navigatorInfo);
+    await page.goto(selectedUrl);
+    //await page.goto("https://bot.sannysoft.com/");
 
     // 5 dakika bekle
     await page.waitForTimeout(300000);
-
-    console.log("Tarayıcı kapatılıyor...");
     await browser.close();
-    console.log("Tarayıcı başarıyla kapatıldı.");
   } catch (error) {
     console.error("Hata oluştu:", error);
     if (browser) {
