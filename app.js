@@ -7,7 +7,7 @@ const cityCoordinates = JSON.parse(fs.readFileSync('city_coordinates.json', 'utf
 function getRandomCity() {
   const cities = Object.keys(cityCoordinates);
   const randomIndex = Math.floor(Math.random() * cities.length);
-  console.log("Se\u00e7ilen \u015eehir:", cities[randomIndex]);
+  console.log("Seçilen Şehir:", cities[randomIndex]);
   return cities[randomIndex];
 }
 
@@ -23,7 +23,7 @@ function getRandomDevice() {
     'Pixel 4a (5G)', 'Pixel 5', 'Pixel 7'];
   const randomIndex = Math.floor(Math.random() * mobile_devices.length);
   const device = devices[mobile_devices[randomIndex]];
-  console.log("Se\u00e7ilen Cihaz:", mobile_devices[randomIndex]);
+  console.log("Seçilen Cihaz:", mobile_devices[randomIndex]);
   return device;
 }
 
@@ -192,6 +192,22 @@ function deleteUserDataDirectory() {
   const [page] = browser.pages();
   await setupAntiFingerprint(page);
   await page.goto('https://demo.fingerprint.com/playground');
+  await page.waitForTimeout(10000);
+  try {
+    const anomalyScore = await page.evaluate(() => {
+      const elements = document.querySelectorAll(".json-view--pair"); // Tüm öğeleri al
+      for (let element of elements) {
+          let key = element.querySelector(".json-view--property")?.innerText.trim();
+          if (key === "anomalyScore") { // Doğru div'i bulduk
+              return element.querySelector(".json-view--number")?.innerText.trim();
+          }
+      }
+      return "Bulunamadı";
+    });
+    console.log("Anomaly Score:", anomalyScore);
+  } catch (error) {
+    console.error("Hata:", error);
+  }
   //await page.goto('https://browserleaks.com/javascript');
   await page.waitForTimeout(60000 * 60);
 
